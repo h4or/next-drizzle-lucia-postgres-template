@@ -1,15 +1,15 @@
 import { GitHub, Google } from "arctic";
 import { Lucia } from "lucia";
-import { DrizzleSQLiteAdapter } from "@lucia-auth/adapter-drizzle";
+import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { cookies } from "next/headers";
 import { User } from "lucia";
 import { Session } from "lucia";
 import { env } from "@/env";
-import { UserId as CustomUserId } from "@/types";
+import { UserId as CustomUserId } from "@/use-cases/types";
 
-const adapter = new DrizzleSQLiteAdapter(db, sessions, users);
+const adapter = new DrizzlePostgreSQLAdapter(db, sessions as any, users);
 
 export const lucia = new Lucia(adapter, {
   sessionCookie: {
@@ -45,7 +45,7 @@ export const validateRequest = async (): Promise<
       cookies().set(
         sessionCookie.name,
         sessionCookie.value,
-        sessionCookie.attributes,
+        sessionCookie.attributes
       );
     }
     if (!result.session) {
@@ -53,7 +53,7 @@ export const validateRequest = async (): Promise<
       cookies().set(
         sessionCookie.name,
         sessionCookie.value,
-        sessionCookie.attributes,
+        sessionCookie.attributes
       );
     }
   } catch {}
@@ -72,11 +72,11 @@ declare module "lucia" {
 
 export const github = new GitHub(
   env.GITHUB_CLIENT_ID,
-  env.GITHUB_CLIENT_SECRET,
+  env.GITHUB_CLIENT_SECRET
 );
 
 export const googleAuth = new Google(
   env.GOOGLE_CLIENT_ID,
   env.GOOGLE_CLIENT_SECRET,
-  `${env.HOST_NAME}/api/login/google/callback`,
+  `${env.HOST_NAME}/api/login/google/callback`
 );

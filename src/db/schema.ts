@@ -1,76 +1,80 @@
-import { integer, text, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import {
+  timestamp,
+  text,
+  pgEnum,
+  serial,
+  boolean,
+  pgTable,
+  integer,
+} from "drizzle-orm/pg-core";
+export const accountTypeEnum = pgEnum("type", ["email", "google", "github"]);
 
-export const accountTypeEnum = ["email", "google", "github"] as const;
-
-const sqliteTable = sqliteTableCreator((name) => `app_${name}`);
-
-export const users = sqliteTable("user", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const users = pgTable("user", {
+  id: serial("id").primaryKey(),
   email: text("email").unique(),
-  emailVerified: integer("email_verified", { mode: "timestamp" }),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
 });
 
-export const accounts = sqliteTable("accounts", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-  userId: integer("user_id", { mode: "number" })
-    .references(() => users.id, { onDelete: "cascade" })
-    .unique()
-    .notNull(),
-  accountType: text("account_type", { enum: accountTypeEnum }).notNull(),
-  githubId: text("github_id").unique(),
-  googleId: text("google_id").unique(),
+export const accounts = pgTable("accounts", {
+  id: serial("id").primaryKey(),
+  userId: serial("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accountType: accountTypeEnum("accountType").notNull(),
+  githubId: text("githubId").unique(),
+  googleId: text("googleId").unique(),
   password: text("password"),
   salt: text("salt"),
 });
 
-export const magicLinks = sqliteTable("magic_links", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const magicLinks = pgTable("magic_links", {
+  id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   token: text("token"),
-  tokenExpiresAt: integer("token_expires_at", { mode: "timestamp" }).notNull(),
+  tokenExpiresAt: timestamp("tokenExpiresAt", { mode: "date" }),
 });
 
-export const resetTokens = sqliteTable("reset_tokens", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-  userId: integer("user_id", { mode: "number" })
+export const resetTokens = pgTable("reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: serial("userId")
+    .notNull()
     .references(() => users.id, { onDelete: "cascade" })
-    .unique()
-    .notNull(),
+    .unique(),
   token: text("token"),
-  tokenExpiresAt: integer("token_expires_at", { mode: "timestamp" }).notNull(),
+  tokenExpiresAt: timestamp("tokenExpiresAt", { mode: "date" }),
 });
 
-export const verifyEmailTokens = sqliteTable("verify_email_tokens", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-  userId: integer("user_id", { mode: "number" })
+export const verifyEmailTokens = pgTable("verify_email_tokens", {
+  id: serial("id").primaryKey(),
+  userId: serial("userId")
+    .notNull()
     .references(() => users.id, { onDelete: "cascade" })
-    .unique()
-    .notNull(),
+    .unique(),
   token: text("token"),
-  tokenExpiresAt: integer("token_expires_at", { mode: "timestamp" }).notNull(),
+  tokenExpiresAt: timestamp("tokenExpiresAt", { mode: "date" }),
 });
 
-export const profiles = sqliteTable("profile", {
-  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
-  userId: integer("user_id", { mode: "number" })
+export const profiles = pgTable("profile", {
+  id: serial("id").primaryKey(),
+  userId: serial("userId")
+    .notNull()
     .references(() => users.id, { onDelete: "cascade" })
-    .unique()
-    .notNull(),
-  displayName: text("display_name"),
-  imageId: text("image_id"),
+    .unique(),
+  displayName: text("displayName"),
+  imageId: text("imageId"),
   image: text("image"),
   bio: text("bio").notNull().default(""),
 });
 
-export const sessions = sqliteTable("session", {
+export const sessions = pgTable("session", {
   id: text("id").primaryKey(),
-  userId: integer("user_id", { mode: "number" })
-    .references(() => users.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  expiresAt: integer("expires_at").notNull(),
+  userId: serial("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
 });
-
 export type User = typeof users.$inferSelect;
 export type Profile = typeof profiles.$inferSelect;
